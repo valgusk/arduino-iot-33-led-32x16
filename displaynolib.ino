@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <WiFiNINA.h>
 
 int status = WL_DISCONNECTED;
 WiFiClient wifiClient;
