@@ -46,6 +46,7 @@ void setup() {
   pinMode(OE, OUTPUT);
 
   Serial.begin(9600);
+  WiFi.noLowPowerMode();
 
   for(int i = 0; i < 768; i++) buffer[i] = 1;
 }
