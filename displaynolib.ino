@@ -27,7 +27,8 @@ WiFiClient client;
 #define OE 9   // output enable
 
 
-#define FREQ 15
+#define FREQ 14
+#define ENHANCE_CONTRAST true
 
 void setup() {
   // put your setup code here, to run once:
@@ -48,36 +49,29 @@ void setup() {
   Serial.begin(9600);
   WiFi.noLowPowerMode();
 
-  for(int i = 0; i < 768; i++) buffer[i] = 1;
+  for(int i = 0; i < 768; i++) buffer[i] = (i / 3) % 32; 
 }
 
 uint8_t step = 0;
 int time = 0;
 int val = 0;
 int readbytes = 0;
+long lastMillis = 0;
+int brightness = 15;
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  
   time++;
 
-  step = step + 1;
-  if(step > FREQ) {
+  step++;
+  if(step > FREQ) {   
     step = 0;
 
     if(time > FREQ * 10) {
-      outputOff();
       ensureConnection();
+      ensureClient();
       readMessage();
-      
-      time = 0;
-  
-//      delay(300);
+      outputOn();
     }
-
-    readClient();
-    
-//    Serial.println((char*)&buffer);
   }
   
   val = (step == FREQ);
@@ -87,10 +81,17 @@ void loop() {
   uint8_t* addr2 = addr1 + 384;
 
   for(uint8_t line_pair = 0; line_pair < 8; line_pair++) {
-    setLine(line_pair - 1);
+#ifndef ENHANCE_CONTRAST
     outputOff();
-    
+#endif
     for(int pixquad = 0; pixquad < 16; pixquad++) {
+#ifdef ENHANCE_CONTRAST
+      if(pixquad == brightness) { 
+        // here we are actually setting brignthess for last line, hence brightness assignment from previous step
+        outputOff();
+      }
+#endif
+      
       uint8_t starta = *addr1;
       uint8_t middla = *(addr1 + 1);
       uint8_t enda = *(addr1 + 2);
@@ -117,16 +118,30 @@ void loop() {
       uint8_t gb2 = endb >> 4;
       uint8_t bb2 = endb & 15;
 
+      
       setVal(ra2, ga2, ba2, rb2, gb2, bb2);
       
       addr1 = addr1 + 3;
       addr2 = addr2 + 3;
     }
-
-    latch();
-    outputOn();
     
+    outputOn();
+
+    setLine(line_pair);
+    latch();
+#ifdef ENHANCE_CONTRAST
+    brightness = 15 - step;
+#endif
   }
+}
+
+void clear() {
+    REG_PORT_OUTCLR1 = PORT_PB10;
+    REG_PORT_OUTCLR1 = PORT_PB11;
+    REG_PORT_OUTCLR0 = PORT_PA07;
+    REG_PORT_OUTCLR0 = PORT_PA05;
+    REG_PORT_OUTCLR0 = PORT_PA04;
+    REG_PORT_OUTCLR0 = PORT_PA06;
 }
 
 void setVal(uint8_t ra, uint8_t ga, uint8_t ba, uint8_t rb, uint8_t gb, uint8_t bb) {
@@ -176,7 +191,15 @@ void setVal(uint8_t ra, uint8_t ga, uint8_t ba, uint8_t rb, uint8_t gb, uint8_t 
 }
 
 void latch() {
+  latchOn();
+  latchOff();
+}
+
+void latchOn() {
   REG_PORT_OUTSET1 = PORT_PB08;
+}
+
+void latchOff() {
   REG_PORT_OUTCLR1 = PORT_PB08;
 }
 
@@ -196,6 +219,10 @@ void outputOff() {
 
 void outputOn() {
   REG_PORT_OUTSET0 = PORT_PA20;
+}
+
+void outputToggle() {
+  REG_PORT_OUTTGL0 = PORT_PA20;
 }
 
 void setLine(uint8_t num) {
@@ -230,10 +257,10 @@ void ensureConnection() {
   }
 }
 
-void readClient() {
+void readMessage() {
 //  Serial.println(client.available());
   int availableBytes = client.available();
-  int bytesToRead = min(availableBytes, 768 - readbytes);
+  int bytesToRead = min(availableBytes, min(768 - readbytes, 768));
 
 //  if()
   
@@ -249,7 +276,7 @@ void readClient() {
   }
 }
 
-void readMessage() {
+void ensureClient() {
   if(status != WL_CONNECTED) return;
 
   if(client.connected()) {

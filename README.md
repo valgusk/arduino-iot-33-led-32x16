@@ -25,14 +25,14 @@
 
 # how render in the panel is done
 - for each row pair (0+8, 1+9, ..., 7+15)
-  - we set current row(`setLine(line_pair - 1)`) - 1 is substracted to account for technical order of panel rows.
-  - we disable panel (`outputOff()`)
+  - we disable panel for previous row (`outputOff()`)
   - for each column
     - we set rgb value for a two pixels, one for each row in the pair (`setVal(...)`) and shift to next pixel (`clock()`).
       _here the rgb value is actually 1bit, that is - ON/OFF. But we do it frequently enough to make it seem like it is PWM-ed.
       for example if stored value is 13, it will get turned on 13 of 15 frames, thus getting more or less expected percieved brightness (this is the reason for nano not being really performant enough)_
-  - we toggle LAT(to send data for row I think) (`latch()`)
   - we turn the panel back on (`outputOn()`)
+  - we toggle LAT(to send data for row) (`latch()`)
+  - we set current row(`setLine(line_pair)`)
 
 # Notes
 - `WiFi.begin("xxxxxxxx", "xxxxxxxx")` must be changed to whatever your `SSID` | `password` are

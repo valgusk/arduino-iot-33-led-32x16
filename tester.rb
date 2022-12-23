@@ -36,17 +36,25 @@ begin
         g = (DIST - [DIST, (DIST - distance).abs].min) / DIST
         b = (DIST - [DIST, (DIST * 2 - distance).abs].min) / DIST
 
-        [r, g, b].map { |float_val| (float_val * 15).round }
+        r,g,b = [r, g, b].map { |float_val| (float_val * 15).round }
+
+        if [r, g, b].all?(&:zero?)
+          r = ((1.0 - ((distance.to_f - 2) / 35)) * 2).round
+          b = ((1.0 - (distance.to_f / 36)) * 4).round
+          g = ((1.0 - ((distance.to_f + 2) / 38)) * 4).round
+        end
+
+        [r, g, b]
       end
     end
 
     # pixels = 16.times.flat_map do |row|
     #   32.times.map do |column|
-    #     if row == idx % 16
-    #       [15,15,15]
-    #     else
-    #       [0, 0, 0]
-    #     end
+    #     # if row == idx % 16
+    #       [2] * 3
+    #     # else
+    #     #   [0, 0, 0]
+    #     # end
     #   end
     # end
 
@@ -60,20 +68,7 @@ begin
       ]
     end
 
-    puts "STEP:"
-
-    data.each_slice(48) do |colors|
-      rowdata = []
-      colors.each do |color|
-        rowdata << (color >> 4)
-        rowdata << (color & 15)
-      end
-
-      puts rowdata.each_slice(3).map { |rgb| rgb.any?(&:positive?) ? '_' : ' ' }.join
-    end
-
-
-    # puts data.size
+    puts "STEP"
 
     string = data.map { |i| i.chr }.join
 
