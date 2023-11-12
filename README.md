@@ -34,6 +34,23 @@
   - we toggle LAT(to send data for row) (`latch()`)
   - we set current row(`setLine(line_pair)`)
 
+# hardcoded pinout
+```
+
+ nano  |  board input  |  nano
+________________________________
+              ___
+  D2  ←   RF |· ·| GF   →  D3
+  D4  ←   BF |· ·| GND  →  GND
+  D5  ←   RS |· ·| GS   →  D6
+  D7  ←   BS  · ·| GND  →  GND
+  A0  ←   RA  · ·| RB   →  A1
+  A2  ←   RC |· ·| RD   →  A3
+  D8  ←  CLK |· ·| LAT  →  A4
+  D9  ←   OE |· ·| GND  →  GND
+              ‾‾‾
+```
+
 # Notes
 - `WiFi.begin("xxxxxxxx", "xxxxxxxx")` must be changed to whatever your `SSID` | `password` are
 - assigning static IP to controller in router is recommended. No discovery functionality is built in for pefromance reasons.
